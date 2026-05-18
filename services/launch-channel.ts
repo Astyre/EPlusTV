@@ -15,6 +15,7 @@ import {PlaylistHandler} from './playlist-handler';
 import {appStatus} from './app-status';
 import {removeChannelStatus} from './shared-helpers';
 import {calculateChannelNumber} from './channels';
+import {getStartPaddingMinutes} from './misc-db-service';
 import {gothamHandler} from './gotham-handler';
 import {wsnHandler} from './wsn-handler';
 import {pwhlHandler} from './pwhl-handler';
@@ -157,14 +158,16 @@ export const launchChannel = async (channelId: string, appUrl: string): Promise<
   }
 
   const now = new Date().valueOf();
+  const paddingMs = (await getStartPaddingMinutes()) * 60 * 1000;
   const channel = isNumber ? parseInt(`${channelNum}`, 10) : channelNum;
 
   // Find the entry with the most recent start time (if there are overlapping)
+  // start padding allows connecting to the stream before the listed start time
   const playingNow = await db.entries
     .findOneAsync<IEntry>({
       channel,
       end: {$gt: now},
-      start: {$lt: now},
+      start: {$lt: now + paddingMs},
     })
     .sort({start: -1});
 
@@ -184,12 +187,13 @@ export const checkNextStream = async (channelId: string): Promise<void> => {
   }
 
   const now = new Date().valueOf();
+  const paddingMs = (await getStartPaddingMinutes()) * 60 * 1000;
 
   const channel = parseInt(channelId, 10);
-  const entries = await db.entries.findAsync<IEntry>({channel, start: {$gt: now}}).sort({start: 1});
+  const entries = await db.entries.findAsync<IEntry>({channel, start: {$gt: now + paddingMs}}).sort({start: 1});
 
   if (entries && entries.length > 0) {
-    const diff = entries[0].start - now;
+    const diff = Math.max(0, entries[0].start - paddingMs - now);
 
     appStatus.channels[channelId].heartbeatTimer = setTimeout(() => {
       console.log(`Channel #${channelId} is scheduled to finish. Removing playlist info.`);

@@ -9,6 +9,7 @@ import {
   hideStudio,
   getCategoryFilter,
   getTitleFilter,
+  getStartPaddingMinutes,
 } from '@/services/misc-db-service';
 
 export const Options: FC = async () => {
@@ -20,11 +21,32 @@ export const Options: FC = async () => {
   const hide_studio = await hideStudio();
   const categoryFilter = await getCategoryFilter();
   const titleFilter = await getTitleFilter();
+  const startPaddingMinutes = await getStartPaddingMinutes();
 
   return (
     <section hx-swap="outerHTML" hx-target="this">
       <h3>Options</h3>
       <div class="grid">
+        <form id="start-padding" hx-post="/start-padding" hx-trigger="submit">
+          <label>
+            <span>Start Padding (minutes)</span>
+            <fieldset role="group">
+              <input
+                type="number"
+                placeholder="Minutes before event to start stream"
+                value={startPaddingMinutes}
+                data-value={startPaddingMinutes}
+                name="start-padding"
+                min={0}
+                max={60}
+                required
+              />
+              <button type="submit" id="start-padding-button">
+                Save
+              </button>
+            </fieldset>
+          </label>
+        </form>
         <form id="start-channel" hx-post="/start-channel" hx-trigger="submit">
           <label>
             <span>
@@ -214,6 +236,15 @@ export const Options: FC = async () => {
       <script
         dangerouslySetInnerHTML={{
           __html: `
+          var startPaddingForm = document.getElementById('start-padding');
+
+          if (startPaddingForm) {
+            startPaddingForm.addEventListener('htmx:beforeRequest', function() {
+              this.querySelector('#start-padding-button').setAttribute('aria-busy', 'true');
+              this.querySelector('#start-padding-button').setAttribute('aria-label', 'Loading…');
+            });
+          }
+
           var rebuildEpgForm = document.getElementById('start-channel');
 
           if (rebuildEpgForm) {

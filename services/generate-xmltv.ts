@@ -5,7 +5,7 @@ import moment from 'moment';
 import {db} from './database';
 import {calculateChannelFromName, CHANNELS} from './channels';
 import {IEntry} from './shared-interfaces';
-import {getLinearStartChannel, getNumberOfChannels, getStartChannel, xmltvPadding} from './misc-db-service';
+import {getLinearStartChannel, getNumberOfChannels, getStartChannel, xmltvPadding, getStartPaddingMinutes} from './misc-db-service';
 
 const baseCategories = ['HD', 'HDTV', 'Sports event', 'Sports', 'E+TV', 'EPlusTV'];
 
@@ -50,6 +50,7 @@ export const generateXml = async (linear = false): Promise<xml> => {
   const numOfChannels = await getNumberOfChannels();
   const linearStartChannel = await getLinearStartChannel();
   const xmltvPadded = await xmltvPadding();
+  const startPaddingMs = (await getStartPaddingMinutes()) * 60 * 1000;
 
   const wrap: any = {
     tv: [
@@ -157,7 +158,7 @@ export const generateXml = async (linear = false): Promise<xml> => {
         {
           _attr: {
             channel: `${channelNum}.eplustv`,
-            start: moment(entry.start).format('YYYYMMDDHHmmss ZZ'),
+            start: moment(entry.start - startPaddingMs).format('YYYYMMDDHHmmss ZZ'),
             stop: moment(end).format('YYYYMMDDHHmmss ZZ'),
           },
         },

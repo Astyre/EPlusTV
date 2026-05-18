@@ -95,6 +95,15 @@ export const initMiscDb = async (): Promise<void> => {
     });
   }
 
+  const setupStartPadding = (await db.misc.countAsync({name: 'start_padding_minutes'})) > 0 ? true : false;
+
+  if (!setupStartPadding) {
+    await db.misc.insertAsync<IMiscDbEntry<number>>({
+      name: 'start_padding_minutes',
+      value: 0,
+    });
+  }
+
   const setupHideStudio = (await db.misc.countAsync({name: 'hide_studio'})) > 0 ? true : false;
 
   if (!setupHideStudio) {
@@ -235,6 +244,15 @@ export const xmltvPadding = async (): Promise<boolean> => {
 
 export const setXmltvPadding = async (value: boolean): Promise<number> =>
   (await db.misc.updateAsync({name: 'xmltv_padding'}, {$set: {value}})).numAffected;
+
+export const getStartPaddingMinutes = async (): Promise<number> => {
+  const {value} = await db.misc.findOneAsync<IMiscDbEntry<number>>({name: 'start_padding_minutes'});
+
+  return value;
+};
+
+export const setStartPaddingMinutes = async (value: number): Promise<number> =>
+  (await db.misc.updateAsync({name: 'start_padding_minutes'}, {$set: {value}})).numAffected;
 
 export const hideStudio = async (): Promise<boolean> => {
   const {value} = await db.misc.findOneAsync<IMiscDbEntry<boolean>>({name: 'hide_studio'});

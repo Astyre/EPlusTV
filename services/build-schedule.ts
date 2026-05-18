@@ -1,5 +1,5 @@
 import {db, IDocument} from './database';
-import {getNumberOfChannels, getStartChannel, usesLinear, getCategoryFilter, getTitleFilter} from './misc-db-service';
+import {getNumberOfChannels, getStartChannel, usesLinear, getCategoryFilter, getTitleFilter, getStartPaddingMinutes} from './misc-db-service';
 import {IChannel, IEntry} from './shared-interfaces';
 import {formatEntryName, usesMultiple} from './generate-xmltv';
 
@@ -11,11 +11,11 @@ export const removeEntriesNetwork = async (networkName: string): Promise<void> =
   await db.entries.removeAsync({network: networkName}, {multi: true});
 };
 
-const scheduleEntry = async (entry: IEntry & IDocument, startChannel: number, numOfChannels: number): Promise<void> => {
+const scheduleEntry = async (entry: IEntry & IDocument, startChannel: number, numOfChannels: number, paddingMs: number): Promise<void> => {
   let channelNum: number;
 
   const availableChannels = await db.schedule
-    .findAsync<IChannel & IDocument>({channel: {$gte: startChannel}, endsAt: {$lt: entry.start}})
+    .findAsync<IChannel & IDocument>({channel: {$gte: startChannel}, endsAt: {$lt: entry.start - paddingMs}})
     .sort({channel: 1});
 
   if (!availableChannels || !availableChannels.length) {
@@ -49,6 +49,7 @@ export const scheduleEntries = async (): Promise<void> => {
   const useLinear = await usesLinear();
   const startChannel = await getStartChannel();
   const numOfChannels = await getNumberOfChannels();
+  const paddingMs = (await getStartPaddingMinutes()) * 60 * 1000;
 
   if (!useLinear) {
     const linearEntries = await db.entries.countAsync({linear: {$exists: true}});
@@ -119,7 +120,7 @@ export const scheduleEntries = async (): Promise<void> => {
     }
 
     console.log('Scheduling event: ', formattedEntryName);
-    await scheduleEntry(entry, startChannel, numOfChannels);
+    await scheduleEntry(entry, startChannel, numOfChannels, paddingMs);
     scheduledEntryCount++;
   }
 

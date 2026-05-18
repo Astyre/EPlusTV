@@ -103,6 +103,7 @@ import {
   getLatestVersion,
   getLastModified,
   setLastModified,
+  setStartPaddingMinutes,
 } from './services/misc-db-service';
 
 // Check for SSL environment variables
@@ -374,6 +375,23 @@ app.post('/xmltv-padding', async c => {
       } XMLTV padding"}}`,
     },
   );
+});
+
+app.post('/start-padding', async c => {
+  const body = await c.req.parseBody();
+  const paddingMinutes = _.toNumber(body['start-padding']);
+
+  if (_.isNaN(paddingMinutes) || paddingMinutes < 0 || paddingMinutes > 60) {
+    return c.html(<Options />, 200, {
+      'HX-Trigger': `{"HXToast":{"type":"error","body":"Start padding must be a number between 0 and 60"}}`,
+    });
+  }
+
+  await setStartPaddingMinutes(paddingMinutes);
+
+  return c.html(<Options />, 200, {
+    'HX-Trigger': `{"HXToast":{"type":"success","body":"Successfully saved start padding (${paddingMinutes} minute${paddingMinutes === 1 ? '' : 's'})"}}`,
+  });
 });
 
 app.post('/hide-studio', async c => {
