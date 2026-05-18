@@ -22,7 +22,7 @@ The server exposes 4 main endpoints:
 | /linear-xmltv.xml | The linear schedule that you'll import into your client (only used when using the dedicated linear channels option) - Not needed for Channels DVR |
 
 # Running
-The recommended way of running is to pull the image from [Docker Hub](https://hub.docker.com/r/tonywagner/eplustv).
+The recommended way of running is to pull the image from [Docker Hub](https://hub.docker.com/r/astyre/eplustv).
 
 ## Environment Variables
 | Environment Variable | Description | Required? | Default |
@@ -271,13 +271,13 @@ Available for free
 By default, the easiest way to get running is:
 
 ```bash
-docker run -p 8000:8000 -v config_dir:/app/config tonywagner/eplustv
+docker run -p 8000:8000 -v config_dir:/app/config astyre/eplustv
 ```
 
 If you run into permissions issues:
 
 ```bash
-docker run -p 8000:8000 -v config_dir:/app/config -e PUID=$(id -u $USER) -e PGID=$(id -g $USER) tonywagner/eplustv
+docker run -p 8000:8000 -v config_dir:/app/config -e PUID=$(id -u $USER) -e PGID=$(id -g $USER) astyre/eplustv
 ```
 
 Open the service in your web browser at `http://<ip>:8000`
